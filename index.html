@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>ALTER.SHELL</title>
+    <style>
+      html, body {
+        margin: 0;
+        padding: 0;
+        background: black;
+        overflow: hidden;
+      }
+      canvas {
+        display: block;
+        position: absolute;
+        top: 0; left: 0;
+        width: 100vw;
+        height: 100vh;
+      }
+    </style>
+  </head>
+  <body>
+    <script src="https://unpkg.com/hydra-synth"></script>
+    <script>
+      const hydra = new Hydra({
+        detectAudio: false,
+        enableStreamCapture: false,
+        canvas: document.createElement("canvas"),
+        width: window.innerWidth,
+        height: window.innerHeight,
+      })
+      document.body.appendChild(hydra.canvas)
+
+      // Strato primario
+      osc(10, 0.03, 0.9)
+        .diff(noise(3, 0.1).rotate(0.2))
+        .modulate(osc(1, 0.1).kaleid(7), 0.2)
+        .color(0.1, 0.4, 0.6)
+        .brightness(-0.3)
+        .contrast(2.5)
+        .out(o0)
+
+      // Strato secondario
+      voronoi(40, 0.5)
+        .modulate(noise(20, 0.3), 0.2)
+        .colorama(0.9)
+        .rotate(0.1, 0.05)
+        .blend(o0, 0.4)
+        .invert()
+        .out(o1)
+
+      // Feedback distruttivo
+      src(o1)
+        .scrollX(0.001)
+        .scrollY(0.002)
+        .modulatePixelate(osc(20, 0.03).rotate(Math.PI/2), 30)
+        .luma(0.3)
+        .blend(o0, 0.7)
+        .out(o2)
+
+      // Esplosione finale
+      src(o2)
+        .modulate(noise(2).rotate(0.1), 0.1)
+        .diff(osc(5, 0.2).kaleid(3))
+        .posterize(3)
+        .out()
+    </script>
+  </body>
+</html>
