@@ -1,69 +1,217 @@
 <!DOCTYPE html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <title>ALTER.SHELL</title>
-    <style>
-      html, body {
-        margin: 0;
-        padding: 0;
-        background: black;
-        overflow: hidden;
-      }
-      canvas {
-        display: block;
-        position: absolute;
-        top: 0; left: 0;
-        width: 100vw;
-        height: 100vh;
-      }
-    </style>
-  </head>
-  <body>
-    <script src="https://unpkg.com/hydra-synth"></script>
-    <script>
-      const hydra = new Hydra({
-        detectAudio: false,
-        enableStreamCapture: false,
-        canvas: document.createElement("canvas"),
-        width: window.innerWidth,
-        height: window.innerHeight,
-      })
-      document.body.appendChild(hydra.canvas)
 
-      // Strato primario
-      osc(10, 0.03, 0.9)
-        .diff(noise(3, 0.1).rotate(0.2))
-        .modulate(osc(1, 0.1).kaleid(7), 0.2)
-        .color(0.1, 0.4, 0.6)
-        .brightness(-0.3)
-        .contrast(2.5)
-        .out(o0)
+<html lang="it">
 
-      // Strato secondario
-      voronoi(40, 0.5)
-        .modulate(noise(20, 0.3), 0.2)
-        .colorama(0.9)
-        .rotate(0.1, 0.05)
-        .blend(o0, 0.4)
-        .invert()
-        .out(o1)
+<head>
 
-      // Feedback distruttivo
-      src(o1)
-        .scrollX(0.001)
-        .scrollY(0.002)
-        .modulatePixelate(osc(20, 0.03).rotate(Math.PI/2), 30)
-        .luma(0.3)
-        .blend(o0, 0.7)
-        .out(o2)
+<meta charset="UTF-8" />
 
-      // Esplosione finale
-      src(o2)
-        .modulate(noise(2).rotate(0.1), 0.1)
-        .diff(osc(5, 0.2).kaleid(3))
-        .posterize(3)
-        .out()
-    </script>
-  </body>
+<title>alter.shell</title>
+
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+
+<style>
+
+  html,body{margin:0;height:100%;background:#000;color:#fff;overflow:hidden;font-family:ui-monospace,Menlo,Consolas,monospace}
+
+  canvas{position:fixed;inset:0;width:100vw;height:100vh;display:block;z-index:0}
+
+  #overlay{
+
+    position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+
+    background:transparent;color:#f33;letter-spacing:.18em;font-size:1.2rem;z-index:2;
+
+    user-select:none;pointer-events:auto;opacity:.9;transition:opacity .4s ease;
+
+  }
+
+  #overlay.hidden{opacity:0;pointer-events:none}
+
+  .scan{position:fixed;inset:0;pointer-events:none;z-index:1;
+
+    background:repeating-linear-gradient(180deg,transparent,transparent 3px,rgba(255,255,255,.045) 4px,transparent 6px);
+
+    mix-blend-mode:soft-light}
+
+</style>
+
+</head>
+
+<body>
+
+<div id="overlay">[ CLICK TO ENABLE AUDIO ]</div>
+
+<div class="scan"></div>
+
+<!-- Hydra -->
+
+<script src="https://unpkg.com/hydra-synth"></script>
+
+<audio id="audio" src="root-loop.mp3" loop playsinline></audio>
+
+<script>
+
+// ==== VISUALS: avvio immediato ====
+
+const hydra = new Hydra({
+
+  detectAudio:false, enableStreamCapture:false,
+
+  canvas: document.createElement('canvas'),
+
+  width: innerWidth, height: innerHeight
+
+});
+
+document.body.appendChild(hydra.canvas);
+
+// input mouse (morfologia)
+
+const mouse = {x:.5, y:.5};
+
+addEventListener('pointermove', e=>{
+
+  mouse.x = e.clientX / innerWidth;
+
+  mouse.y = e.clientY / innerHeight;
+
+});
+
+// Scene principale (installazione)
+
+osc(()=>10+mouse.x*8, 0.02, ()=>0.8+mouse.y*0.2)
+
+  .diff(noise(()=>3+mouse.x*4, ()=>0.1+mouse.y*0.3).rotate(()=>0.12+mouse.x*0.3))
+
+  .modulate(osc(()=>1+mouse.x*2, 0.08).kaleid(()=>5+Math.floor(mouse.y*5)), ()=>0.18+mouse.y*0.25)
+
+  .color(0.10,0.36,0.58)
+
+  .brightness(-0.25)
+
+  .contrast(2.3)
+
+  .out(o0)
+
+src(o0)
+
+  .scrollX(()=> (mouse.x-.5)*0.01 + 0.0008)
+
+  .scrollY(()=> (mouse.y-.5)*0.01 + 0.0012)
+
+  .modulatePixelate(osc(()=>16+mouse.x*24, 0.03).rotate(Math.PI/2), ()=>24+mouse.y*46)
+
+  .luma(0.28)
+
+  .blend(o0, 0.65)
+
+  .out(o1)
+
+src(o1)
+
+  .modulate(noise(()=>2+mouse.x*2).rotate(()=>0.08+mouse.y*0.1), 0.12)
+
+  .diff(osc(5, 0.18).kaleid(()=>3+Math.floor(mouse.x*3)))
+
+  .posterize(3)
+
+  .out()
+
+// testi deliranti (non bloccanti)
+
+const whispers=[
+
+  "S.U.R.V∆//ROOT_LOOP", "SIGNAL_NULL", "ECHO_MIRROR", "TRACE:INTRUSION",
+
+  "CRC:9FA2", "BLACK-CRT:ALIVE", "MONITOR/LOOP_TRUE", "GHOST_SCAN", "Δ DELIRIUM"
+
+];
+
+const tag=document.createElement('div');
+
+Object.assign(tag.style,{
+
+  position:'fixed', bottom:'8%', left:'50%', transform:'translateX(-50%)',
+
+  color:'#f33', fontSize:'14px', letterSpacing:'0.14em', opacity:.75, zIndex:1
+
+});
+
+document.body.appendChild(tag);
+
+setInterval(()=>{ tag.textContent = whispers[(Math.random()*whispers.length)|0]; }, 1800);
+
+// Resize
+
+addEventListener('resize', ()=>hydra.setResolution(innerWidth, innerHeight));
+
+// ==== AUDIO: tenta autoplay, altrimenti chiede click ====
+
+const overlay = document.getElementById('overlay');
+
+const audio = document.getElementById('audio');
+
+async function tryStartAudio(){
+
+  audio.volume = 0;
+
+  try{
+
+    await audio.play();           // tenta autoplay
+
+    // fade‑in morbido
+
+    let v = 0; const id=setInterval(()=>{ v+=0.02; audio.volume=Math.min(v,1); if(v>=1) clearInterval(id); }, 80);
+
+    overlay.classList.add('hidden'); // non blocca i visual, ma lo togliamo se parte
+
+  }catch(e){
+
+    // autoplay bloccato: overlay resta visibile come invito
+
+    console.log('Autoplay blocked; waiting for user gesture');
+
+  }
+
+}
+
+tryStartAudio();
+
+// Un clic qualsiasi abilita audio se bloccato
+
+addEventListener('pointerdown', async ()=>{
+
+  if (audio.paused) tryStartAudio();
+
+}, {once:false});
+
+</script>
+
+<!-- p5 invisibile SOLO per fullscreen/resize (vincolo SURV∆) -->
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.9.0/p5.min.js"></script>
+
+<script>
+
+let spacing=90, cols=0, rows=0, modGrid=[];
+
+function setup(){ const c=createCanvas(1,1); c.elt.style.position='fixed'; c.elt.style.opacity='0'; c.elt.style.pointerEvents='none'; }
+
+function keyPressed(){ if(key==='f'||key==='F'){ let fs=fullscreen(); fullscreen(!fs); } }
+
+function windowResized(){
+
+  resizeCanvas(1,1);
+
+  cols = int(width/spacing); rows = int(height/spacing); modGrid=[];
+
+  for (let i=-cols/2; i<cols/2; i++){ for (let j=-rows/2; j<rows/2; j++){ modGrid.push({x:i*spacing, y:j*spacing, h:random(60,350)}); } }
+
+}
+
+</script>
+
+</body>
+
 </html>
